@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:convertjsontoexcel/screens/home_page.dart';
+import 'package:convertjsontoexcel/screens/select_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -13,7 +13,7 @@ class _IntroPageState extends State<IntroPage>  with SingleTickerProviderStateMi
   AnimationController animationController;
   Animation<double> animation;
   startTimer(){
-    var duration = new Duration(seconds: 5);
+    var duration = new Duration(seconds: 3);
     return new Timer(duration,navigatorPage);
   }
   navigatorPage(){
@@ -25,13 +25,13 @@ class _IntroPageState extends State<IntroPage>  with SingleTickerProviderStateMi
   void initState() {
     super.initState();
     animationController = AnimationController(
-      vsync: this, duration: Duration(seconds: 2,),
+      vsync: this, duration: Duration(seconds: 3,),
     );
     animation = CurvedAnimation(
       parent: animationController,
       curve: Curves.bounceInOut,
     );
-    animationController.forward();
+
     startTimer();
   }
   @override
@@ -42,14 +42,17 @@ class _IntroPageState extends State<IntroPage>  with SingleTickerProviderStateMi
 
   @override
   Widget build(BuildContext context) {
+    animationController.forward();
     return Scaffold(
       body: Center(
         child: ScaleTransition(
           scale: animation,
-          child: Container(
-            height: 100,
-            width: 100,
-            child: Image.asset("assets/images/documents.png"),
+          child:
+          SizedBox(
+            height: 250,
+            width: 250,
+
+            child: Image.asset("assets/images/documents.png",fit: BoxFit.fill,),
           ),
         ),
       ),

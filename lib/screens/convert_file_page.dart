@@ -1,7 +1,11 @@
+import 'dart:io';
+
+import 'package:excel/excel.dart';
 import 'package:flutter/material.dart';
 
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
 
 class FilePickerDemo extends StatefulWidget {
   @override
@@ -15,6 +19,7 @@ class _FilePickerDemoState extends State<FilePickerDemo> {
   String _directoryPath;
   String _extension;
   bool _loadingPath = false;
+  String fileDirectory;
   bool _multiPick = false;
   FileType _pickingType = FileType.any;
   TextEditingController _controller = TextEditingController();
@@ -49,24 +54,70 @@ class _FilePickerDemoState extends State<FilePickerDemo> {
     });
   }
 
-  void _clearCachedFiles() {
-    FilePicker.platform.clearTemporaryFiles().then((result) {
-      _scaffoldKey.currentState.showSnackBar(
-        SnackBar(
-          backgroundColor: result ? Colors.green : Colors.red,
-          content: Text((result
-              ? 'Temporary files removed with success.'
-              : 'Failed to clean temporary files')),
-        ),
-      );
-    });
-  }
+  Future<void> excelToJson() async {
+    ByteData data = await rootBundle.load(fileDirectory);
+    var bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+    var excel = Excel.decodeBytes(bytes);
+    int i = 0;
+    List<dynamic> keys = new List<dynamic>();
+    List<Map<String, dynamic>> json = new List<Map<String, dynamic>>();
+    for (var table in excel.tables.keys) {
+      for (var row in excel.tables[table].rows) {
+        if (i == 0) {
+          keys = row;
+          i++;
+        } else {
+          Map<String, dynamic> temp = Map<String, dynamic>();
+          int j = 0;
+          String tk = '';
+          for (var key in keys) {
+            tk = "\u201C" + key + "\u201D";
+            temp[tk] = (row[j].runtimeType == String)
+                ? "\u201C" + row[j].toString() + "\u201D"
+                : row[j];
+            j++;
+          }
+          json.add(temp);
+        }
+      }
+    }
+    print(json.length);
+    String fullJson = json.toString().substring(1, json
+        .toString()
+        .length - 1);
 
-  void _selectFolder() {
-    FilePicker.platform.getDirectoryPath().then((value) {
-      setState(() => _directoryPath = value);
-    });
+
+    print("AAAAAAA");
+
+    final directory = await getExternalStorageDirectory();
+//    final dirPath = '${directory.path}/aaaa' ;
+//    await new Directory(dirPath).create();
+
+
+    File file = await File('${directory.path}/aaaa.txt').create();
+    await file.writeAsString(fullJson);
+    print(file.exists().toString());
+
+
   }
+//  void _clearCachedFiles() {
+//    FilePicker.platform.clearTemporaryFiles().then((result) {
+//      _scaffoldKey.currentState.showSnackBar(
+//        SnackBar(
+//          backgroundColor: result ? Colors.green : Colors.red,
+//          content: Text((result
+//              ? 'Temporary files removed with success.'
+//              : 'Failed to clean temporary files')),
+//        ),
+//      );
+//    });
+//  }
+
+//  void _selectFolder() {
+//    FilePicker.platform.getDirectoryPath().then((value) {
+//      setState(() => _directoryPath = value);
+//    });
+//  }
 
   @override
   Widget build(BuildContext context) {
@@ -83,86 +134,17 @@ class _FilePickerDemoState extends State<FilePickerDemo> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
-                    Padding(
-                      padding: const EdgeInsets.only(top: 20.0),
-                      child: DropdownButton(
-                          hint: Text('LOAD PATH FROM'),
-                          value: _pickingType,
-                          items: <DropdownMenuItem>[
-                            DropdownMenuItem(
-                              child: Text('FROM AUDIO'),
-                              value: FileType.audio,
-                            ),
-                            DropdownMenuItem(
-                              child: Text('FROM IMAGE'),
-                              value: FileType.image,
-                            ),
-                            DropdownMenuItem(
-                              child: Text('FROM VIDEO'),
-                              value: FileType.video,
-                            ),
-                            DropdownMenuItem(
-                              child: Text('FROM MEDIA'),
-                              value: FileType.media,
-                            ),
-                            DropdownMenuItem(
-                              child: Text('FROM ANY'),
-                              value: FileType.any,
-                            ),
-                            DropdownMenuItem(
-                              child: Text('CUSTOM FORMAT'),
-                              value: FileType.custom,
-                            ),
-                          ],
-                          onChanged: (value) => setState(() {
-                            _pickingType = value;
-                            if (_pickingType != FileType.custom) {
-                              _controller.text = _extension = '';
-                            }
-                          })),
-                    ),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints.tightFor(width: 100.0),
-                      child: _pickingType == FileType.custom
-                          ? TextFormField(
-                        maxLength: 15,
-                        autovalidateMode: AutovalidateMode.always,
-                        controller: _controller,
-                        decoration:
-                        InputDecoration(labelText: 'File extension'),
-                        keyboardType: TextInputType.text,
-                        textCapitalization: TextCapitalization.none,
-                      )
-                          : const SizedBox(),
-                    ),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints.tightFor(width: 200.0),
-                      child: SwitchListTile.adaptive(
-                        title:
-                        Text('Pick multiple files', textAlign: TextAlign.right),
-                        onChanged: (bool value) =>
-                            setState(() => _multiPick = value),
-                        value: _multiPick,
-                      ),
-                    ),
+
+
                     Padding(
                       padding: const EdgeInsets.only(top: 50.0, bottom: 20.0),
-                      child: Column(
-                        children: <Widget>[
-                          RaisedButton(
-                            onPressed: () => _openFileExplorer(),
-                            child: Text("Open file picker"),
-                          ),
-                          RaisedButton(
-                            onPressed: () => _selectFolder(),
-                            child: Text("Pick folder"),
-                          ),
-                          RaisedButton(
-                            onPressed: () => _clearCachedFiles(),
-                            child: Text("Clear temporary files"),
-                          ),
-                        ],
+                      child: RaisedButton(
+                        onPressed: () => _openFileExplorer(),
+                        child: Text("Open file picker"),
                       ),
+                    ),
+                    RaisedButton(
+                      onPressed: ()=> excelToJson(),
                     ),
                     Builder(
                       builder: (BuildContext context) => _loadingPath
@@ -200,7 +182,7 @@ class _FilePickerDemoState extends State<FilePickerDemo> {
                                     .map((e) => e.path)
                                     .toList()[index]
                                     .toString();
-
+                                fileDirectory = path;
                                 return ListTile(
                                   title: Text(
                                     name,

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:excel/excel.dart';
@@ -71,9 +72,9 @@ class _FilePickerDemoState extends State<FilePickerDemo> {
           int j = 0;
           String tk = '';
           for (var key in keys) {
-            tk = "\u201C" + key + "\u201D";
+            tk = '"' + key + '"';
             temp[tk] = (row[j].runtimeType == String)
-                ? "\u201C" + row[j].toString() + "\u201D"
+                ? '"' + row[j].toString() + '"'
                 : row[j];
             j++;
           }
@@ -87,19 +88,53 @@ class _FilePickerDemoState extends State<FilePickerDemo> {
         .length - 1);
 
 
-    print("AAAAAAA");
 
+    fullJson = '{ "DATA" : [$fullJson]}';
     final directory = await getExternalStorageDirectory();
 //    final dirPath = '${directory.path}/aaaa' ;
 //    await new Directory(dirPath).create();
 
-
-    File file = await File('${directory.path}/aaaa.txt').create();
+    File file = await File('${directory.path}/bbbb.json').create();
     await file.writeAsString(fullJson);
     print(file.exists().toString());
 
 
   }
+
+
+
+
+  Future<void> jsonToExcel() async{
+    String jsonString = await rootBundle.loadString("assets/subway_stations_name.json");
+
+    List<dynamic> jsonResult = jsonDecode(jsonString)["DATA"];
+
+
+    var excel = Excel.createExcel();
+    Sheet sheetObject = excel['SheetName'];
+
+    Map<String,dynamic> result = jsonResult[0];
+    sheetObject.appendRow(result.keys.toList());
+
+    for(int i =0;i<jsonResult.length;i++){
+      Map<String,dynamic> result = jsonResult[i];
+      sheetObject.appendRow(result.values.toList());
+    }
+    final directory = await getExternalStorageDirectory();
+
+    excel.encode().then((onValue) {
+      File(("${directory.path}/excel.xlsx"))
+        ..createSync(recursive: true)
+        ..writeAsBytesSync(onValue);
+    });
+
+
+    print(sheetObject);
+//    print(result.keys.toList());
+//    print(result.values.toList());
+    //    List<dynamic> aaa = jsonResult[0];
+//    print("aaa : ${aaa[0]}");
+    }
 //  void _clearCachedFiles() {
 //    FilePicker.platform.clearTemporaryFiles().then((result) {
 //      _scaffoldKey.currentState.showSnackBar(
@@ -144,7 +179,7 @@ class _FilePickerDemoState extends State<FilePickerDemo> {
                       ),
                     ),
                     RaisedButton(
-                      onPressed: ()=> excelToJson(),
+                      onPressed: ()=> jsonToExcel(),
                     ),
                     Builder(
                       builder: (BuildContext context) => _loadingPath

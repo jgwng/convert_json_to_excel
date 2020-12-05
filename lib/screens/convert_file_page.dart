@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:convertjsontoexcel/widget/alert_dialog.dart';
 import 'package:excel/excel.dart';
 import 'package:flutter/material.dart';
 
@@ -20,6 +21,7 @@ class _FilePickerDemoState extends State<FilePickerDemo> {
   String _directoryPath;
   String _extension;
   bool _loadingPath = false;
+  String newFileName= "";
   String fileDirectory;
   bool _multiPick = false;
   FileType _pickingType = FileType.any;
@@ -55,7 +57,7 @@ class _FilePickerDemoState extends State<FilePickerDemo> {
     });
   }
 
-  Future<void> excelToJson() async {
+  void excelToJson(String fileName) async {
     ByteData data = await rootBundle.load(fileDirectory);
     var bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
     var excel = Excel.decodeBytes(bytes);
@@ -94,17 +96,17 @@ class _FilePickerDemoState extends State<FilePickerDemo> {
 //    final dirPath = '${directory.path}/aaaa' ;
 //    await new Directory(dirPath).create();
 
-    File file = await File('${directory.path}/bbbb.json').create();
+    File file = await File('${directory.path}/$newFileName.json').create();
     await file.writeAsString(fullJson);
     print(file.exists().toString());
 
 
   }
 
- 
 
 
-  Future<void> jsonToExcel() async{
+
+  Future<void> jsonToExcel(String fileName) async{
     String jsonString = await rootBundle.loadString("assets/subway_stations_name.json");
 
     List<dynamic> jsonResult = jsonDecode(jsonString)["DATA"];
@@ -178,8 +180,19 @@ class _FilePickerDemoState extends State<FilePickerDemo> {
                         child: Text("Open file picker"),
                       ),
                     ),
+
                     RaisedButton(
-                      onPressed: ()=> jsonToExcel(),
+                      onPressed: () async {
+                        newFileName = await showDialog(
+                          context: this.context,
+                          builder: (BuildContext context){
+                            return FileNameDialog(context : this.context);
+                          },
+                        );
+                        if(newFileName != null){
+                          excelToJson(newFileName);
+                        }
+                      },
                     ),
                     Builder(
                       builder: (BuildContext context) => _loadingPath

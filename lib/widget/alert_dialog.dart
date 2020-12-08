@@ -29,11 +29,11 @@ class FileNameDialog extends StatelessWidget{
       ),
       actions: [
         new FlatButton(
-        onPressed: () => Navigator.of(context, rootNavigator: true).pop(textEditingController.text),
+        onPressed: () => Navigator.pop(context,textEditingController.text),
           child: new Text("예"),
       ),
         new FlatButton(
-          onPressed: () =>  Navigator.of(context, rootNavigator: true).pop(null),
+          onPressed: () =>  Navigator.pop(context),
           child: new Text("아니오"),
         )],
     );

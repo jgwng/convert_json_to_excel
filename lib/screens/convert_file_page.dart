@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:convertjsontoexcel/utils/convert_file.dart';
+import 'package:convertjsontoexcel/utils/dialog.dart';
 import 'package:convertjsontoexcel/widget/alert_dialog.dart';
 import 'package:excel/excel.dart';
 import 'package:flutter/material.dart';
@@ -16,14 +18,12 @@ class FilePickerDemo extends StatefulWidget {
 
 class _FilePickerDemoState extends State<FilePickerDemo> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  String _fileName;
   List<PlatformFile> _paths;
-  String _directoryPath;
   String _extension;
   bool _loadingPath = false;
   String newFileName= "";
   String fileDirectory;
-  bool _multiPick = false;
+  bool selectedFile = false;
   FileType _pickingType = FileType.any;
   TextEditingController _controller = TextEditingController();
 
@@ -36,10 +36,9 @@ class _FilePickerDemoState extends State<FilePickerDemo> {
   void _openFileExplorer() async {
     setState(() => _loadingPath = true);
     try {
-      _directoryPath = null;
       _paths = (await FilePicker.platform.pickFiles(
         type: _pickingType,
-        allowMultiple: _multiPick,
+        allowMultiple: false,
         allowedExtensions: (_extension?.isNotEmpty ?? false)
             ? _extension?.replaceAll(' ', '')?.split(',')
             : null,
@@ -53,108 +52,10 @@ class _FilePickerDemoState extends State<FilePickerDemo> {
     if (!mounted) return;
     setState(() {
       _loadingPath = false;
-      _fileName = _paths != null ? _paths.map((e) => e.name).toString() : '...';
+      fileDirectory = _paths[0].path;
+      selectedFile = true;
     });
   }
-
-  void excelToJson(String fileName) async {
-    ByteData data = await rootBundle.load(fileDirectory);
-    var bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
-    var excel = Excel.decodeBytes(bytes);
-    int i = 0;
-    List<dynamic> keys = new List<dynamic>();
-    List<Map<String, dynamic>> json = new List<Map<String, dynamic>>();
-    for (var table in excel.tables.keys) {
-      for (var row in excel.tables[table].rows) {
-        if (i == 0) {
-          keys = row;
-          i++;
-        } else {
-          Map<String, dynamic> temp = Map<String, dynamic>();
-          int j = 0;
-          String tk = '';
-          for (var key in keys) {
-            tk = '"' + key + '"';
-            temp[tk] = (row[j].runtimeType == String)
-                ? '"' + row[j].toString() + '"'
-                : row[j];
-            j++;
-          }
-          json.add(temp);
-        }
-      }
-    }
-    print(json.length);
-    String fullJson = json.toString().substring(1, json
-        .toString()
-        .length - 1);
-
-
-
-    fullJson = '{ "DATA" : [$fullJson]}';
-    final directory = await getExternalStorageDirectory();
-//    final dirPath = '${directory.path}/aaaa' ;
-//    await new Directory(dirPath).create();
-
-    File file = await File('${directory.path}/$newFileName.json').create();
-    await file.writeAsString(fullJson);
-    print(file.exists().toString());
-
-
-  }
-
-
-
-
-  Future<void> jsonToExcel(String fileName) async{
-    String jsonString = await rootBundle.loadString("assets/subway_stations_name.json");
-
-    List<dynamic> jsonResult = jsonDecode(jsonString)["DATA"];
-
-
-    var excel = Excel.createExcel();
-    Sheet sheetObject = excel['SheetName'];
-
-    Map<String,dynamic> result = jsonResult[0];
-    sheetObject.appendRow(result.keys.toList());
-
-    for(int i =0;i<jsonResult.length;i++){
-      Map<String,dynamic> result = jsonResult[i];
-      sheetObject.appendRow(result.values.toList());
-    }
-    final directory = await getExternalStorageDirectory();
-
-    excel.encode().then((onValue) {
-      File(("${directory.path}/excel.xlsx"))
-        ..createSync(recursive: true)
-        ..writeAsBytesSync(onValue);
-    });
-
-
-    print(sheetObject);
-//    print(result.keys.toList());
-//    print(result.values.toList());
-    //    List<dynamic> aaa = jsonResult[0];
-//    print("aaa : ${aaa[0]}");
-    }
-//  void _clearCachedFiles() {
-//    FilePicker.platform.clearTemporaryFiles().then((result) {
-//      _scaffoldKey.currentState.showSnackBar(
-//        SnackBar(
-//          backgroundColor: result ? Colors.green : Colors.red,
-//          content: Text((result
-//              ? 'Temporary files removed with success.'
-//              : 'Failed to clean temporary files')),
-//        ),
-//      );
-//    });
-//  }
-
-//  void _selectFolder() {
-//    FilePicker.platform.getDirectoryPath().then((value) {
-//      setState(() => _directoryPath = value);
-//    });
-//  }
 
   @override
   Widget build(BuildContext context) {
@@ -162,17 +63,26 @@ class _FilePickerDemoState extends State<FilePickerDemo> {
       home: Scaffold(
         key: _scaffoldKey,
         appBar: AppBar(
-          title: const Text('File Picker example app'),
+          title: const Text('Covert file to What you want'),
         ),
         body: Center(
             child: Padding(
-              padding: const EdgeInsets.only(left: 10.0, right: 10.0),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: SingleChildScrollView(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
-
-
+                    Container(
+                      width: 200,
+                      height: 200,
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: Colors.black,
+                          width: 3
+                        )
+                      ),
+                      child: selectedFile ? Image.asset('assets/images/documents.png') : null,
+                    ),
                     Padding(
                       padding: const EdgeInsets.only(top: 50.0, bottom: 20.0),
                       child: RaisedButton(
@@ -180,70 +90,30 @@ class _FilePickerDemoState extends State<FilePickerDemo> {
                         child: Text("Open file picker"),
                       ),
                     ),
-
-                    RaisedButton(
-                      onPressed: () async {
-                        newFileName = await showDialog(
-                          context: this.context,
-                          builder: (BuildContext context){
-                            return FileNameDialog(context : this.context);
-                          },
-                        );
-                        if(newFileName != null){
-                          excelToJson(newFileName);
-                        }
-                      },
-                    ),
-                    Builder(
-                      builder: (BuildContext context) => _loadingPath
-                          ? Padding(
-                        padding: const EdgeInsets.only(bottom: 10.0),
-                        child: const CircularProgressIndicator(),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      RaisedButton(
+                        onPressed: () async {
+                          print(fileDirectory);
+//                        print(_directoryPath);
+////                        print(_paths[0].path);
+                          newFileName = await fileNameDialog(context);
+                          if(newFileName != null){
+                            await excelToJson(newFileName,fileDirectory,_scaffoldKey);
+//                            await jsonToExcel(newFileName,fileDirectory,_scaffoldKey);
+                          }
+                        },
+                        child: Text("Convert"),
+                      ),
+                      SizedBox(width: 30,),
+                      RaisedButton(
+                        onPressed: (){
+                          
+                        },
+                        child: Text("Send Email"),
                       )
-                          : _directoryPath != null
-                          ? ListTile(
-                        title: Text('Directory path'),
-                        subtitle: Text(_directoryPath),
-                      )
-                          : _paths != null
-                          ? Container(
-                        padding: const EdgeInsets.only(bottom: 30.0),
-                        height:
-                        MediaQuery.of(context).size.height * 0.50,
-                        child: Scrollbar(
-                            child: ListView.separated(
-                              itemCount:
-                              _paths != null && _paths.isNotEmpty
-                                  ? _paths.length
-                                  : 1,
-                              itemBuilder:
-                                  (BuildContext context, int index) {
-                                final bool isMultiPath =
-                                    _paths != null && _paths.isNotEmpty;
-                                final String name = 'File $index: ' +
-                                    (isMultiPath
-                                        ? _paths
-                                        .map((e) => e.name)
-                                        .toList()[index]
-                                        : _fileName ?? '...');
-                                final path = _paths
-                                    .map((e) => e.path)
-                                    .toList()[index]
-                                    .toString();
-                                fileDirectory = path;
-                                return ListTile(
-                                  title: Text(
-                                    name,
-                                  ),
-                                  subtitle: Text(path),
-                                );
-                              },
-                              separatorBuilder:
-                                  (BuildContext context, int index) =>
-                              const Divider(),
-                            )),
-                      )
-                          : const SizedBox(),
+                    ],
                     ),
                   ],
                 ),

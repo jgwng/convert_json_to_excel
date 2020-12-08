@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:convertjsontoexcel/screens/select_page.dart';
+import 'package:convertjsontoexcel/screens/convert_file_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -17,7 +17,7 @@ class _IntroPageState extends State<IntroPage>  with SingleTickerProviderStateMi
     return new Timer(duration,navigatorPage);
   }
   navigatorPage(){
-    Navigator.push(context, MaterialPageRoute(builder: (context) => HomePage()));
+    Navigator.push(context, MaterialPageRoute(builder: (context) => FilePickerDemo()));
   }
 
 

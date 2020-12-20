@@ -1,5 +1,5 @@
 import 'package:convertjsontoexcel/constants/size.dart';
-import 'package:convertjsontoexcel/screens/select_page.dart';
+import 'package:convertjsontoexcel/screens/convert_file_page.dart';
 import 'package:convertjsontoexcel/screens/intro_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -20,7 +20,7 @@ class LandingPage extends StatelessWidget {
                 future: Future.delayed(Duration(seconds: 3),),
                 builder: (context, snapshot){
                   if(snapshot.connectionState == ConnectionState.done)
-                    return HomePage();
+                    return ConvertFile();
 
                   return IntroPage();
 

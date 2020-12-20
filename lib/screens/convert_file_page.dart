@@ -1,36 +1,39 @@
-import 'dart:convert';
-import 'dart:io';
 
+
+import 'package:convertjsontoexcel/constants/app_theme.dart';
 import 'package:convertjsontoexcel/utils/convert_file.dart';
 import 'package:convertjsontoexcel/utils/dialog.dart';
-import 'package:convertjsontoexcel/widget/alert_dialog.dart';
-import 'package:excel/excel.dart';
 import 'package:flutter/material.dart';
 
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter_email_sender/flutter_email_sender.dart';
 import 'package:path_provider/path_provider.dart';
 
-class FilePickerDemo extends StatefulWidget {
+
+class ConvertFile extends StatefulWidget {
   @override
-  _FilePickerDemoState createState() => _FilePickerDemoState();
+  _ConvertFileState createState() => _ConvertFileState();
 }
 
-class _FilePickerDemoState extends State<FilePickerDemo> {
+class _ConvertFileState extends State<ConvertFile> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   List<PlatformFile> _paths;
   String _extension;
   bool _loadingPath = false;
   String newFileName= "";
+  int dropdownValue = 0;
   String fileDirectory;
   bool selectedFile = false;
   FileType _pickingType = FileType.any;
-  TextEditingController _controller = TextEditingController();
+  List<String> selectList = ['ExcelToJson',"JsonToExcel"];
+  List<String> extensionList = ['xlsx','json'];
+
 
   @override
   void initState() {
     super.initState();
-    _controller.addListener(() => _extension = _controller.text);
+
   }
 
   void _openFileExplorer() async {
@@ -53,28 +56,30 @@ class _FilePickerDemoState extends State<FilePickerDemo> {
     setState(() {
       _loadingPath = false;
       fileDirectory = _paths[0].path;
+      _extension = _paths[0].extension;
+      print(_extension);
       selectedFile = true;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
+    return Scaffold(
         key: _scaffoldKey,
         appBar: AppBar(
-          title: const Text('Covert file to What you want'),
+          title: Text('Convert File to What You Want',style: AppThemes.textTheme.bodyText1),
+          centerTitle: true,
+          elevation: 0,
+          backgroundColor: Colors.white,
         ),
         body: Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: SingleChildScrollView(
+            child: SingleChildScrollView(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
                     Container(
-                      width: 200,
-                      height: 200,
+                      width: 150,
+                      height: 150,
                       decoration: BoxDecoration(
                         border: Border.all(
                           color: Colors.black,
@@ -83,43 +88,77 @@ class _FilePickerDemoState extends State<FilePickerDemo> {
                       ),
                       child: selectedFile ? Image.asset('assets/images/documents.png') : null,
                     ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 50.0, bottom: 20.0),
+                    SizedBox(height: 50,),
+                    Container(
+                      width: 150,
                       child: RaisedButton(
                         onPressed: () => _openFileExplorer(),
-                        child: Text("Open file picker"),
+                        child: Text("Open file Browser",style: AppThemes.textTheme.bodyText1,),
                       ),
                     ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      RaisedButton(
+                    SizedBox(height: 50,),
+                    Container(
+                        height: 50.0,
+                        width: 150.0,
+                        child: DropdownButton(
+                          value: dropdownValue,
+                          icon: Icon(Icons.arrow_downward),
+                          iconSize: 24,
+                          elevation: 16,
+                          isExpanded: true,
+                          style: TextStyle(color: Colors.black, fontSize: 20.0),
+                          underline: Container(
+                            height: 1,
+                            color: Colors.black,
+                          ),
+                          onChanged: (newValue) {
+                            setState(() {
+                              dropdownValue = newValue;
+                              print(dropdownValue);
+                            });
+                          },
+                          items: <int>[0, 1]
+                              .map<DropdownMenuItem<int>>((int value) {
+                            return DropdownMenuItem<int>(
+                              value: value,
+                              child: Text(selectList[value]),
+                            );
+                          }).toList(),
+                        )
+                    ),
+                    SizedBox(height: 80,),
+                  Container(
+                    width: 150,
+                    child:RaisedButton(
                         onPressed: () async {
-                          print(fileDirectory);
-//                        print(_directoryPath);
-////                        print(_paths[0].path);
-                          newFileName = await fileNameDialog(context);
-                          if(newFileName != null){
-                            await excelToJson(newFileName,fileDirectory,_scaffoldKey);
-//                            await jsonToExcel(newFileName,fileDirectory,_scaffoldKey);
+                          if(fileDirectory == null){
+                            noFileDialog(context);
+
+                          }
+                          else{
+                            if(_extension != extensionList[dropdownValue])
+                            {
+                              errorDialog(context);
+                            }
+                            else{
+                              newFileName = await fileNameDialog(context);
+                              if(dropdownValue == 0){
+                                excelToJson(newFileName,fileDirectory,_scaffoldKey,context);
+                              }else{
+                                jsonToExcel(newFileName,fileDirectory,_scaffoldKey,context);
+                              }
+                            }
                           }
                         },
-                        child: Text("Convert"),
-                      ),
-                      SizedBox(width: 30,),
-                      RaisedButton(
-                        onPressed: (){
-                          
-                        },
-                        child: Text("Send Email"),
-                      )
-                    ],
+                        child: Text("Convert",style: AppThemes.textTheme.bodyText1,)
                     ),
+                  ),
+                    SizedBox(height: 50,),
+
+
                   ],
                 ),
               ),
-            )),
-      ),
-    );
+            ));
   }
 }

@@ -1,3 +1,4 @@
+import 'package:convertjsontoexcel/constants/app_theme.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -18,12 +19,10 @@ class FileNameDialog extends StatelessWidget{
       title: Text("파일 이름을 입력하세요"),
       content: TextField(
         controller: textEditingController,
-        style: TextStyle(
-            fontWeight: FontWeight.w500,fontFamily:"DoHyeon",fontSize: 15
-        ),
+        style: AppThemes.textTheme.bodyText1,
         decoration: InputDecoration(
           hintText: "확장자명 제외하고 입력해 주세요.",
-          hintStyle: TextStyle(fontWeight: FontWeight.w500,fontFamily:"DoHyeon",fontSize: 15),
+          hintStyle: AppThemes.textTheme.bodyText1,
 
         ),
       ),

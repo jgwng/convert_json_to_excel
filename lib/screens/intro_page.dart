@@ -17,7 +17,7 @@ class _IntroPageState extends State<IntroPage>  with SingleTickerProviderStateMi
     return new Timer(duration,navigatorPage);
   }
   navigatorPage(){
-    Navigator.push(context, MaterialPageRoute(builder: (context) => FilePickerDemo()));
+    Navigator.push(context, MaterialPageRoute(builder: (context) => ConvertFile()));
   }
 
 
